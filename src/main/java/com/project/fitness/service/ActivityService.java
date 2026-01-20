@@ -60,7 +60,4 @@ public class ActivityService {
                 .collect(Collectors.toList()) ;
     }
 
-//    public ActivityService(ActivityRepository activityRepository) {
-//        this.activityRepository = activityRepository;
-//    }
 }
