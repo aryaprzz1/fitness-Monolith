@@ -1,10 +1,16 @@
 package com.project.fitness.service;
 
+import com.project.fitness.dto.LoginRequest;
 import com.project.fitness.dto.RegisterRequest;
 import com.project.fitness.dto.UserResponse;
 import com.project.fitness.model.User;
+import com.project.fitness.model.UserRole;
 import com.project.fitness.repository.UserRepository;
+import io.jsonwebtoken.security.Password;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -15,36 +21,27 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
     // constructor dependency injecty
 
-//    public User register(RegisterRequest request){ /// returning user needs to return user response
+
         public UserResponse register(RegisterRequest request){
+            UserRole role = request.getRole() != null ? request.getRole() : UserRole.USER;
+
             User user = User.builder()
                     .email(request.getEmail())
                     .firstName(request.getFirstName())
                     .lastName(request.getLastName())
-                    .password(request.getPassword())
+                    .password(passwordEncoder.encode(request.getPassword()))
+                    .role(role)
                     .build();
-//        User user = new User(
-//                null,
-//                request.getEmail(),
-//                request.getPassword(),
-//                request.getFirstName(),
-//                request.getLastName(),
-//                Instant.parse("2026-01-19T12:20:00+00:00") // could pass null to
-//                        .atZone(ZoneOffset.UTC).toLocalDateTime(),
-//                null,
-//                List.of(),
-//                List.of()
-//
-//        );
+
             User savedUser = userRepository.save(user) ;
             
             return mapToResponse(savedUser) ;
-       // return userRepository.save(user) ;
     }
 
-    private UserResponse mapToResponse(User savedUser) {
+    public UserResponse mapToResponse(User savedUser) {
             UserResponse response = new UserResponse();
             response.setId(savedUser.getId());
             response.setEmail(savedUser.getEmail());
@@ -54,6 +51,17 @@ public class UserService {
             response.setCreatedAt(savedUser.getCreatedAt()) ;
 
             return response;
+
+    }
+
+    public User isAuth(LoginRequest loginRequest) {
+        User user = userRepository.findByEmail(loginRequest.getEmail());
+        if (user == null) throw new UsernameNotFoundException("Invalid email or password");
+
+        if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
+                 throw new UsernameNotFoundException("Invalid email or password");
+        }
+        return user;
 
     }
 }

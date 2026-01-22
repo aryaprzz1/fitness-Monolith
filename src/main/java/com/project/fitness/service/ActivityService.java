@@ -19,10 +19,11 @@ public class ActivityService {
     private final ActivityRepository  activityRepository ;
     private final UserRepository userRepository ;
 
-    public ActivityResponse trackActivity(ActivityRequest request) {
-        User user = userRepository.findById(request.getUserId()).orElseThrow(
-                () -> new RuntimeException("invalid used " + request.getUserId())
+    public ActivityResponse trackActivity(String userId ,ActivityRequest request) {
+        User user = userRepository.findById(userId).orElseThrow(
+                () -> new RuntimeException("invalid user " + userId)
         );
+
         Activity activity = Activity.builder()
                 .user(user)
                 .type(request.getType())
